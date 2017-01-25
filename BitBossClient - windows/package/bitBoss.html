@@ -26,6 +26,7 @@
 <p>Twitch OAuth: <input id = 'oauth' type="password" name="oauth"style="width: 200px"></input>&nbsp;&nbsp;<a href="https://twitchapps.com/tmi/" target="_blank">Get OAuth Here</a></p>
 <p>Window Width: <input id = 'width' value ="600" style="width: 80px" type="text" name="width"></input> Window Height: <input id = 'height' value ="500" style="width: 80px"type="text" name="height"></input></p>
 <p>Color 1: <input id = 'c1' value ="" style="width: 120px" type="text" name="c1"></input> Color 2: <input id = 'c2' value ="" style="width: 120px"type="text" name="c2"></input></p>
+<p><input type="checkbox" name="animated" id="animated"> Animated<br></p>
 <input id = 'submit'type="submit" value="UPDATE (RUN)">
 <input id = 'save'type="submit" value="SAVE SETTINGS">
 </div>
@@ -46,6 +47,9 @@
 		$("#oauth").val(settings.oauth);
 		$("#c2").val(settings.c2);
 		$("#c1").val(settings.c1);
+		if(settings.animated){
+			$("#animated").attr("checked", true);
+		}
 	});
 	$("#save").click(function(){
 		var fs = require('fs');
@@ -59,18 +63,35 @@
 		settings.height =	$("#height").val();
 		settings.c2 =$("#c2").val();
 		settings.c1 =$("#c1").val();
+		if($("#animated").is(':checked')){
+			settings.animated = true;
+		}
+		else{
+			settings.animated = false;
+		}
 		fs.writeFile(filename, JSON.stringify(settings, null, 2));
 	});
   </script>
 <script>
 
   $("#submit").click(function(){
+		var fs = require('fs');
+		var jsdom = require("jsdom");
+		var settings = require("./settings.json");
     var h = parseInt($("#height").val());
     var w = parseInt($("#width").val());
     var c1 =$("#c1").val();
   var c2 =$("#c2").val();
     window.resizeTo(w, h);
-$("head").append ('<style type="text/css">#bar { position: absolute; width: 1%; height: 100%;  content: ""; top: 0; left: 0; bottom: 0; right: 0; background: linear-gradient(-45deg,'+c1+'25%,'+c2+' 25%,'+c2+' 50%,'+c1+'50%,'+c1+'75%, '+c2+' 75%,'+c2+'); background-size: 50px 50px; animation: move 2.5s linear infinite; } @keyframes move { 0% { background-position: 0 0; } 100% { background-position: 50px 50px; } }</style>');
+		if(settings.animated){
+			$("head").append('<style type="text/css">#bar { animation: move 2.5s linear infinite;}');
+
+		}
+		else{
+			$("head").append('<style type="text/css">#bar { animation: none;}');
+
+		}
+$("head").append('<style type="text/css">#bar { position: absolute; width: 1%; height: 100%;  content: ""; top: 0; left: 0; bottom: 0; right: 0; background: linear-gradient(-45deg,'+c1+'25%,'+c2+' 25%,'+c2+' 50%,'+c1+'50%,'+c1+'75%, '+c2+' 75%,'+c2+'); background-size: 50px 50px; } @keyframes move { 0% { background-position: 0 0; } 100% { background-position: 50px 50px; } }</style>');
       $("#boss").show();
 
       var stream = $("#stream").val();
