@@ -1,0 +1,168 @@
+//@CLARITY
+
+
+<html>
+<head>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+<script>
+
+</script>
+<title>Bit Boss </title>
+</head>
+<body>
+<div id='boss' style="display: none">
+	<div id="health"> </div>
+	<div id="healthBar">
+
+		<div id="bar" style="width: 100%"></div>
+
+				<div id="label">NONE &nbsp;&nbsp; HP: 1/1</div>
+			<!-- <div id="label">1%</div> -->
+		</div>
+		<br><br><br>
+  </div>
+  <div id="style"> </div>
+<div id="options">
+	<p>Channel Name: <input id = 'channel' type="text" name="channel"></input></p>
+<p>Stream Name: <input id = 'stream' type="text" name="stream"></input></p>
+<p>Twitch OAuth: <input id = 'oauth' type="password" name="oauth"style="width: 200px"></input>&nbsp;&nbsp;<a href="https://twitchapps.com/tmi/" target="_blank">Get OAuth Here</a></p>
+<p>Window Width: <input id = 'width' value ="600" style="width: 80px" type="text" name="width"></input> Window Height: <input id = 'height' value ="500" style="width: 80px"type="text" name="height"></input></p>
+<p>Color 1: <input id = 'c1' value ="" style="width: 120px" type="text" name="c1"></input> Color 2: <input id = 'c2' value ="" style="width: 120px"type="text" name="c2"></input></p>
+<input id = 'submit'type="submit" value="UPDATE (RUN)">
+<input id = 'save'type="submit" value="SAVE SETTINGS">
+</div>
+		<div id="timer"> </div>
+	<link rel="stylesheet" type="text/css" href="main.css"></link>
+
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+  <script>
+	$( document ).ready(function() {
+		var fs = require('fs');
+		var jsdom = require("jsdom");
+		var settings = require("./settings.json");
+		var filename = './settings.json';
+			$("#channel").val(settings.channel);
+		$("#stream").val(settings.twitch);
+		$("#width").val(settings.width);
+		$("#height").val(settings.height);
+		$("#oauth").val(settings.oauth);
+		$("#c2").val(settings.c2);
+		$("#c1").val(settings.c1);
+	});
+	$("#save").click(function(){
+		var fs = require('fs');
+		var jsdom = require("jsdom");
+		var settings = require("./settings.json");
+		var filename = './settings.json';
+		settings.channel = $("#channel").val();
+		settings.twitch = $("#stream").val();
+		settings.oauth =  $("#oauth").val();
+		settings.width =	$("#width").val();
+		settings.height =	$("#height").val();
+		settings.c2 =$("#c2").val();
+		settings.c1 =$("#c1").val();
+		fs.writeFile(filename, JSON.stringify(settings, null, 2));
+	});
+  </script>
+<script>
+
+  $("#submit").click(function(){
+    var h = parseInt($("#height").val());
+    var w = parseInt($("#width").val());
+    var c1 =$("#c1").val();
+  var c2 =$("#c2").val();
+    window.resizeTo(w, h);
+$("head").append ('<style type="text/css">#bar { position: absolute; width: 1%; height: 100%;  content: ""; top: 0; left: 0; bottom: 0; right: 0; background: linear-gradient(-45deg,'+c1+'25%,'+c2+' 25%,'+c2+' 50%,'+c1+'50%,'+c1+'75%, '+c2+' 75%,'+c2+'); background-size: 50px 50px; animation: move 2.5s linear infinite; } @keyframes move { 0% { background-position: 0 0; } 100% { background-position: 50px 50px; } }</style>');
+      $("#boss").show();
+
+      var stream = $("#stream").val();
+			var channel = $("#channel").val();
+			var oauth = $("#oauth").val();
+      boss(stream);
+      function boss(stream){
+        var tmi = require('tmi.js');
+        var fs = require('fs');
+        var jsdom = require("jsdom");
+  var currentTop = "NONE";
+  var health = 0;
+  var bits;
+  var streak = 0;
+  var streakName;
+  var mostStreak = 0;
+  var max = 1;
+
+
+  //
+  // var kd = require("./kd.json");
+  var options = {
+  	options: {
+  		debug: true
+  	},
+  	connection: {
+  		cluster: "aws",
+  		reconnect: true
+  	},
+  	identity: {
+  		username: stream,
+  		password: oauth
+  	},
+  		channels: [channel]
+  };
+
+  var client = new tmi.client(options);
+  client.connect();
+  //document.write("connected to "+stream);
+
+  client.on("cheer", function (channel, userstate, message){
+  	bits = parseInt(userstate.bits);
+  	bitUser = userstate.username;
+
+  	if(userstate.username == currentTop){
+  		health += bits;
+      max += bits;
+
+  	}
+  	else{
+  	if((health - bits) <= 0){
+  		health = bits - health;
+
+  		currentTop = userstate.username;
+
+  		max = Math.round(health);
+  	}
+  	else{
+  		health = health - bits;
+
+  	}
+  	}
+
+    barMax = max;
+    scale = barMax/100;
+$("#label").html(currentTop + "&nbsp;&nbsp; HP:" + health+"/"+max);
+
+
+
+            width = health / scale;
+
+            $("#bar").stop().animate({
+  width: width + "%",
+}, 1500 );
+
+
+      });
+  		setInterval(function() {
+  			if (health > 100){
+  			newhealth = health / 100;
+  			health = +((health - newhealth).toFixed(2));
+
+  			obj.health = Math.round(health);
+
+
+  	}
+  }, 10000);
+
+      }
+  });
+ </script>
+</body>
+</html>

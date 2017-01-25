@@ -1,0 +1,20 @@
+#healthBar {
+   top: 5px;
+    margin: 20px;
+    position: relative;
+    width: 90%;
+    height: 40px;
+    background-color: grey;
+}
+#label {
+
+    position: relative;
+    text-align: center;
+    line-height: 40px;
+    color: white;
+    font-size: 21px;
+    font-weight: bolder;
+}
+body{
+  padding-bottom: 60px;
+}
