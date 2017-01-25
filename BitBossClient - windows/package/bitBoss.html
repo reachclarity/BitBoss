@@ -18,19 +18,24 @@
 			<!-- <div id="label">1%</div> -->
 		</div>
 		<br><br><br>
+		<p>Send Bits: &nbsp; Name: <input id = 'name' value ="" style="width: 120px" type="text" name="name"></input> Bits: <input id = 'bits' value ="" style="width: 120px"type="text" name="bits"></input></p>
+		<p><input id = 'send'type="submit" value="SEND BITS"><input style="left: -2px;"id = 'reset'type="submit" value="RESET BOSS"><input style="left: -2px;" id = 'showOp'type="submit" value="SHOW OPTIONS"></p>
+		<p></p>
+		<hr>
   </div>
   <div id="style"> </div>
 <div id="options">
-	<p>Channel Name: <input id = 'channel' type="text" name="channel"></input></p>
+<p>Channel Name: <input id = 'channel' type="text" name="channel"></input></p>
 <p>Stream Name: <input id = 'stream' type="text" name="stream"></input></p>
 <p>Twitch OAuth: <input id = 'oauth' type="password" name="oauth"style="width: 200px"></input>&nbsp;&nbsp;<a href="https://twitchapps.com/tmi/" target="_blank">Get OAuth Here</a></p>
 <p>Window Width: <input id = 'width' value ="600" style="width: 80px" type="text" name="width"></input> Window Height: <input id = 'height' value ="500" style="width: 80px"type="text" name="height"></input></p>
 <p>Color 1: <input id = 'c1' value ="" style="width: 120px" type="text" name="c1"></input> Color 2: <input id = 'c2' value ="" style="width: 120px"type="text" name="c2"></input></p>
-<p><input type="checkbox" name="animated" id="animated"> Animated<br></p>
+<p><input type="checkbox" name="animated" id="animated"> Animated Bar</input> &nbsp;<input type="checkbox" name="decay" id="decay">Enable Health Decay</input></p>
+<p>Min health for decay: <input id = 'minDecay' type="text" name="minDecay" style="width: 80px"></input>&nbsp; % decay per 10 seconds: <input id = 'percDecay' type="text" name="percDecay" style="width: 80px"></input></p>
+<br>
 <input id = 'submit'type="submit" value="UPDATE (RUN)">
 <input id = 'save'type="submit" value="SAVE SETTINGS">
 </div>
-		<div id="timer"> </div>
 	<link rel="stylesheet" type="text/css" href="main.css"></link>
 
 	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
@@ -47,9 +52,17 @@
 		$("#oauth").val(settings.oauth);
 		$("#c2").val(settings.c2);
 		$("#c1").val(settings.c1);
+		$("#minDecay").val(settings.minDecay);
+		$("#percDecay").val(settings.percDecay);
 		if(settings.animated){
 			$("#animated").attr("checked", true);
 		}
+		if(settings.decay){
+			$("#decay").attr("checked", true);
+		}
+	});
+	$("#showOp").click(function(){
+		$("#options").toggle();
 	});
 	$("#save").click(function(){
 		var fs = require('fs');
@@ -63,11 +76,19 @@
 		settings.height =	$("#height").val();
 		settings.c2 =$("#c2").val();
 		settings.c1 =$("#c1").val();
+		settings.minDecay =$("#minDecay").val();
+		settings.percDecay =$("#percDecay").val();
 		if($("#animated").is(':checked')){
 			settings.animated = true;
 		}
 		else{
 			settings.animated = false;
+		}
+		if($("#decay").is(':checked')){
+			settings.decay = true;
+		}
+		else{
+			settings.decay = false;
 		}
 		fs.writeFile(filename, JSON.stringify(settings, null, 2));
 	});
@@ -83,7 +104,7 @@
     var c1 =$("#c1").val();
   var c2 =$("#c2").val();
     window.resizeTo(w, h);
-		if(settings.animated){
+		if($("#animated").is(':checked')){
 			$("head").append('<style type="text/css">#bar { animation: move 2.5s linear infinite;}');
 
 		}
@@ -109,7 +130,7 @@ $("head").append('<style type="text/css">#bar { position: absolute; width: 1%; h
   var streakName;
   var mostStreak = 0;
   var max = 1;
-
+	var queue = [];
 
   //
   // var kd = require("./kd.json");
@@ -133,10 +154,31 @@ $("head").append('<style type="text/css">#bar { position: absolute; width: 1%; h
   //document.write("connected to "+stream);
 
   client.on("cheer", function (channel, userstate, message){
-  	bits = parseInt(userstate.bits);
-  	bitUser = userstate.username;
+		name = userstate.username;
+  bits = parseInt(userstate.bits);
+	queue.push(name+" "+bits);
+	updateBoss();
+	});
+	$("#send").click(function(){
+		name = $("#name").val();
+	 bits = parseInt($("#bits").val());
+	queue.push(name+" "+bits);
 
-  	if(userstate.username == currentTop){
+	updateBoss();
+	});
+	$("#reset").click(function(){
+		currentTop = "NONE";
+		health  =  0;
+		max = 0;
+		updateBar();
+	});
+		function updateBoss(){
+			while(queue.length > 0){
+					bitUser = queue[0].split(" ")[0];
+					bits = parseInt(queue[0].split(" ")[1]);
+
+
+  	if(bitUser == currentTop){
   		health += bits;
       max += bits;
 
@@ -145,7 +187,7 @@ $("head").append('<style type="text/css">#bar { position: absolute; width: 1%; h
   	if((health - bits) <= 0){
   		health = bits - health;
 
-  		currentTop = userstate.username;
+  		currentTop = bitUser;
 
   		max = Math.round(health);
   	}
@@ -154,7 +196,25 @@ $("head").append('<style type="text/css">#bar { position: absolute; width: 1%; h
 
   	}
   	}
+		updateBar();
+queue.splice(0, 1);
+}
+setInterval(function() {
+	var fs = require('fs');
+	var jsdom = require("jsdom");
+	var settings = require("./settings.json");
+	if($("#decay").is(':checked')){
+	if (health > parseInt($("#minDecay").val())){
+	newhealth = (health / 100) * parseInt($("#percDecay").val());
+	health = Math.round(+((health - newhealth).toFixed(2)));
 
+updateBar();
+
+}
+}
+}, 10000);
+}
+function updateBar(){
     barMax = max;
     scale = barMax/100;
 $("#label").html(currentTop + "&nbsp;&nbsp; HP:" + health+"/"+max);
@@ -168,17 +228,12 @@ $("#label").html(currentTop + "&nbsp;&nbsp; HP:" + health+"/"+max);
 }, 1500 );
 
 
-      });
-  		setInterval(function() {
-  			if (health > 100){
-  			newhealth = health / 100;
-  			health = +((health - newhealth).toFixed(2));
-
-  			obj.health = Math.round(health);
+}
 
 
-  	}
-  }, 10000);
+
+
+
 
       }
   });
