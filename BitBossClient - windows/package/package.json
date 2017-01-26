@@ -1,0 +1,10 @@
+{
+  "main": "bitBoss.html",
+  "name": "Bit Boss",
+  "chromium-args" : "--disable-direct-composition --disable-accelerated-mjpeg-decode --disable-accelerated-video-decode --disable-accelerated-video-decode --disable-accelerated-video-decode --disable-accelerated-2d-canvas",
+  "window": {
+    "width": 600,
+    "height": 500
+  }
+
+}
