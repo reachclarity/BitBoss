@@ -1,0 +1,9 @@
+{
+  "channel": "Channel to connect to",
+  "twitch": "Your Channel",
+  "oauth": "",
+  "width": "600",
+  "height": "500",
+  "c1": "rgb(52, 73, 94)",
+  "c2": "rgb(44, 62, 80)"
+}
